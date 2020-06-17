@@ -112,7 +112,7 @@ public class EventExecutor implements CommandExecutor {
         }
     }
 
-    @Command(aliases = "!addevent", description = "Add Event to DB", usage = "!event [YouTube URL]")
+    @Command(aliases = "!addYTevent", description = "Add Event to DB", usage = "!event [YouTube URL]")
     public void addYoutubeEvent(String[] args, Message message, Server server, User user, TextChannel channel)
         throws IOException {
 
