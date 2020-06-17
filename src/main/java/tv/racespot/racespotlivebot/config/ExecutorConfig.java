@@ -20,8 +20,8 @@ public class ExecutorConfig {
     @Value("${discord.notification.announcement_channel_id}")
     private String announcementChannelId;
 
-    @Value("${discord.notification.error_channel_id}")
-    private String errorChannelId;
+    @Value("${discord.notification.admin_channel_id}")
+    private String adminChannelId;
 
     @Autowired
     private EventRepository eventRepository;
@@ -33,6 +33,6 @@ public class ExecutorConfig {
             googleApiKey,
             eventRepository,
             announcementChannelId,
-            errorChannelId);
+            adminChannelId);
     }
 }

@@ -4,11 +4,15 @@
  */
 package tv.racespot.racespotlivebot.service.executor;
 
+import java.awt.*;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import de.btobastian.sdcf4j.Command;
@@ -17,11 +21,13 @@ import tv.racespot.racespotlivebot.data.Event;
 import tv.racespot.racespotlivebot.data.EventRepository;
 import tv.racespot.racespotlivebot.data.EventStatus;
 
+import org.apache.commons.lang3.StringUtils;
 import org.javacord.api.DiscordApi;
 import org.javacord.api.entity.channel.ServerTextChannel;
 import org.javacord.api.entity.channel.TextChannel;
 import org.javacord.api.entity.message.Message;
 import org.javacord.api.entity.message.MessageBuilder;
+import org.javacord.api.entity.message.embed.EmbedBuilder;
 import org.javacord.api.entity.permission.PermissionType;
 import org.javacord.api.entity.permission.Role;
 import org.javacord.api.entity.server.Server;
@@ -35,14 +41,16 @@ import com.google.api.client.http.HttpRequestInitializer;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.services.youtube.YouTube;
+import com.google.api.services.youtube.model.Channel;
+import com.google.api.services.youtube.model.ChannelListResponse;
 import com.google.api.services.youtube.model.Video;
 import com.google.api.services.youtube.model.VideoListResponse;
 
 public class EventExecutor implements CommandExecutor {
 
     private final String googleApiKey;
-    private final String annoucementChannelId;
-    private final String errorChannelId;
+    private final String announcementChannelId;
+    private final String adminChannelId;
 
     private final EventRepository eventRepository;
 
@@ -56,13 +64,13 @@ public class EventExecutor implements CommandExecutor {
         final DiscordApi api,
         final String googleApiKey,
         final EventRepository eventRepository,
-        final String annoucementChannelId,
-        final String errorChannelId) {
+        final String announcementChannelId,
+        final String adminChannelId) {
         this.api = api;
         this.googleApiKey = googleApiKey;
         this.eventRepository = eventRepository;
-        this.annoucementChannelId = annoucementChannelId;
-        this.errorChannelId = errorChannelId;
+        this.announcementChannelId = announcementChannelId;
+        this.adminChannelId = adminChannelId;
 
         this.youtubeClient = new YouTube.Builder(new NetHttpTransport(), new JacksonFactory(), new HttpRequestInitializer() {
             public void initialize(HttpRequest request) throws IOException {
@@ -72,7 +80,7 @@ public class EventExecutor implements CommandExecutor {
         this.logger = LoggerFactory.getLogger(EventExecutor.class);
     }
 
-    @Scheduled(fixedRate = 300000)
+    @Scheduled(fixedRate = 300000, initialDelay = 10000)
     public void checkScheduledEvents() {
         logger.info("beginning scheduled check");
         List<Event> events = eventRepository.findByStatus(EventStatus.SCHEDULED);
@@ -90,31 +98,51 @@ public class EventExecutor implements CommandExecutor {
 
             int counter = 0;
             VideoListResponse searchResponse = search.execute();
-            List<Video> searchResultList = searchResponse.getItems();
-            if (searchResultList != null) {
-                for (Video searchResult : searchResultList) {
-                    if (!"upcoming".equalsIgnoreCase(searchResult.getSnippet().getLiveBroadcastContent())) {
+            List<Video> videos = searchResponse.getItems();
+            Map<Event, Video> eventToVideoMap = new HashMap<>();
+            List<String> channelIds = new ArrayList<>();
+            if (videos != null) {
+                for (Video video : videos) {
+                    if (!"upcoming".equalsIgnoreCase(video.getSnippet().getLiveBroadcastContent())) {
                         Event event =
-                            events.stream().filter(e -> e.getYoutubeLink().equals(searchResult.getId()))
+                            events.stream().filter(e -> e.getYoutubeLink().equals(video.getId()))
                                 .findFirst().get();
-                        event.setStatus(EventStatus.LIVE);
-                        eventRepository.save(event);
-
-                        ServerTextChannel
-                            channel = api.getServerTextChannelById(annoucementChannelId).get();
-                        new MessageBuilder()
-                            .append(String.format("Event is live: %S", event.getYoutubeLink()))
-                            .send(channel);
+                        eventToVideoMap.put(event, video);
+                        if(!channelIds.contains(video.getSnippet().getChannelId())) {
+                            channelIds.add(video.getSnippet().getChannelId());
+                        }
                         counter++;
-                        logger.info(String.format("Event is live: %S", event.getYoutubeLink()));
                     }
                 }
+            }
+
+            Map<String, String> channelIdToAvatarMap = getChannelAvatarMap(channelIds);
+
+            for(Event event : eventToVideoMap.keySet()) {
+                event.setStatus(EventStatus.LIVE);
+                eventRepository.save(event);
+
+                Video video = eventToVideoMap.get(event);
+
+                ServerTextChannel
+                    channel = api.getServerTextChannelById(announcementChannelId).get();
+                new MessageBuilder()
+                    .setEmbed(new EmbedBuilder()
+                        .setAuthor(video.getSnippet().getChannelTitle())
+                        .setTitle(video.getSnippet().getTitle())
+                        .setDescription("Stream has just gone live!")
+                        .setColor(Color.YELLOW)
+                        .setThumbnail(channelIdToAvatarMap.get(video.getSnippet().getChannelId()))
+                        .setImage(video.getSnippet().getThumbnails().getMaxres().getUrl()))
+                    .send(channel);
+                counter++;
+                logger.info(String.format("Event is live: %S", event.getYoutubeLink()));
             }
             logger.info(String.format("finished checking events: %d events live", counter));
         } catch (Exception ex) {
             logger.error(ex.getMessage());
             ServerTextChannel
-                channel = api.getServerTextChannelById(errorChannelId).get();
+                channel = api.getServerTextChannelById(adminChannelId).get();
             new MessageBuilder()
                 .append(String.format("Error while syncing event status: %s", ex.getMessage()))
                 .send(channel);
@@ -122,11 +150,71 @@ public class EventExecutor implements CommandExecutor {
         logger.info("finished scheduled task");
     }
 
+    private Map<String, String> getChannelAvatarMap(final List<String> channelIds) throws IOException {
+        YouTube.Channels.List search = youtubeClient.channels().list(Arrays.asList("id","snippet"));
+        search.setKey(googleApiKey);
+        search.setId(channelIds);
+
+        ChannelListResponse searchResponse = search.execute();
+        List<Channel> channels = searchResponse.getItems();
+        Map<String, String> idToUrlMap = new HashMap<>();
+        for(Channel channel : channels) {
+            if(StringUtils.isNotEmpty(channel.getSnippet().getThumbnails().getDefault().getUrl())) {
+                idToUrlMap.put(channel.getId(), channel.getSnippet().getThumbnails().getDefault().getUrl());
+            } else {
+                idToUrlMap.put(channel.getId(), "https://cdn.discordapp.com/icons/291983345133289476/4737f24e20bbe4e78104819daffe0bb1.png?size=256");
+            }
+        }
+        return idToUrlMap;
+    }
+
+    @Command(aliases = "!testEmbed")
+    public void testEmbed(String[] args, Message message, Server server, User user, TextChannel channel) {
+        if(!hasAdminPermission(server, user) && args.length != 1) {
+            return;
+        }
+
+        try {
+            YouTube.Videos.List search = youtubeClient.videos().list(Arrays.asList("id","snippet"));
+            search.setKey(googleApiKey);
+            search.setId(Collections.singletonList(args[0]));
+            //search.setFields("items(id/kind,id/videoId,snippet/title,snippet/thumbnails/default/url,snippet/liveBroadcastContent)");
+
+            VideoListResponse searchResponse = search.execute();
+            List<Video> searchResultList = searchResponse.getItems();
+            if (searchResultList != null && searchResultList.size() == 1) {
+                logger.info("found video");
+                Video stream = searchResultList.get(0);
+                Map<String, String> channelAvatar = getChannelAvatarMap(Collections.singletonList(stream.getSnippet().getChannelId()));
+                new MessageBuilder()
+                    .setEmbed(new EmbedBuilder()
+                        .setAuthor(stream.getSnippet().getChannelTitle())
+                        .setTitle(stream.getSnippet().getTitle())
+                        .setDescription("Stream has just gone live!")
+                        .setColor(Color.YELLOW)
+                        .setThumbnail(channelAvatar.get(stream.getSnippet().getChannelId()))
+                        .setImage(stream.getSnippet().getThumbnails().getMaxres().getUrl()))
+                    .send(channel);
+            } else {
+                new MessageBuilder()
+                    .append("Unable to find video with submitted id")
+                    .send(channel);
+                notifyFailed(message);
+            }
+        } catch(IOException ioEx) {
+            notifyFailed(message);
+        }
+    }
+
     @Command(aliases = "!addYTevent", description = "Add Event to DB", usage = "!event [YouTube URL]")
     public void addYoutubeEvent(String[] args, Message message, Server server, User user, TextChannel channel)
         throws IOException {
 
-        if(!hasAdminPermission(server, user)) {
+        if(!adminChannelId.equals(Long.toString(channel.getId()))) {
+            return;
+        }
+        if(!hasAdminPermission(server, user) && args.length != 1) {
+            notifyUnallowed(message);
             return;
         }
 
@@ -171,11 +259,15 @@ public class EventExecutor implements CommandExecutor {
             .anyMatch(role -> role.equals(PermissionType.ADMINISTRATOR));
     }
 
-    public void notifyChecked(Message message) {
+    private void notifyChecked(Message message) {
         message.addReaction("👍");
     }
 
-    public static void notifyFailed(Message message) {
+    private static void notifyFailed(Message message) {
         message.addReaction("👎");
+    }
+
+    public static void notifyUnallowed(Message message) {
+        message.addReaction("❌");
     }
 }
