@@ -116,27 +116,29 @@ public class EventExecutor implements CommandExecutor {
                 }
             }
 
-            Map<String, String> channelIdToAvatarMap = getChannelAvatarMap(channelIds);
+            if(!eventToVideoMap.isEmpty()) {
+                Map<String, String> channelIdToAvatarMap = getChannelAvatarMap(channelIds);
 
-            for(Event event : eventToVideoMap.keySet()) {
-                event.setStatus(EventStatus.LIVE);
-                eventRepository.save(event);
+                for (Event event : eventToVideoMap.keySet()) {
+                    event.setStatus(EventStatus.LIVE);
+                    eventRepository.save(event);
 
-                Video video = eventToVideoMap.get(event);
+                    Video video = eventToVideoMap.get(event);
 
-                ServerTextChannel
-                    channel = api.getServerTextChannelById(announcementChannelId).get();
-                new MessageBuilder()
-                    .setEmbed(new EmbedBuilder()
-                        .setAuthor(video.getSnippet().getChannelTitle())
-                        .setTitle(video.getSnippet().getTitle())
-                        .setDescription("Stream has just gone live!")
-                        .setColor(Color.YELLOW)
-                        .setThumbnail(channelIdToAvatarMap.get(video.getSnippet().getChannelId()))
-                        .setImage(video.getSnippet().getThumbnails().getMaxres().getUrl()))
-                    .send(channel);
-                counter++;
-                logger.info(String.format("Event is live: %S", event.getYoutubeLink()));
+                    ServerTextChannel
+                        channel = api.getServerTextChannelById(announcementChannelId).get();
+                    new MessageBuilder()
+                        .setEmbed(new EmbedBuilder()
+                            .setAuthor(video.getSnippet().getChannelTitle())
+                            .setTitle(video.getSnippet().getTitle())
+                            .setDescription("Stream has just gone live!")
+                            .setColor(Color.YELLOW)
+                            .setThumbnail(channelIdToAvatarMap.get(video.getSnippet().getChannelId()))
+                            .setImage(video.getSnippet().getThumbnails().getMaxres().getUrl()))
+                        .send(channel);
+                    counter++;
+                    logger.info(String.format("Event is live: %S", event.getYoutubeLink()));
+                }
             }
             logger.info(String.format("finished checking events: %d events live", counter));
         } catch (Exception ex) {
