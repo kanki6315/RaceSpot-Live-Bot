@@ -128,13 +128,7 @@ public class EventExecutor implements CommandExecutor {
                     ServerTextChannel
                         channel = api.getServerTextChannelById(announcementChannelId).get();
                     new MessageBuilder()
-                        .setEmbed(new EmbedBuilder()
-                            .setAuthor(video.getSnippet().getChannelTitle())
-                            .setTitle(video.getSnippet().getTitle())
-                            .setDescription("Stream has just gone live!")
-                            .setColor(Color.YELLOW)
-                            .setThumbnail(channelIdToAvatarMap.get(video.getSnippet().getChannelId()))
-                            .setImage(video.getSnippet().getThumbnails().getMaxres().getUrl()))
+                        .setEmbed(constructEmbed(video, channelIdToAvatarMap))
                         .send(channel);
                     counter++;
                     logger.info(String.format("Event is live: %S", event.getYoutubeLink()));
@@ -189,13 +183,7 @@ public class EventExecutor implements CommandExecutor {
                 Video stream = searchResultList.get(0);
                 Map<String, String> channelAvatar = getChannelAvatarMap(Collections.singletonList(stream.getSnippet().getChannelId()));
                 new MessageBuilder()
-                    .setEmbed(new EmbedBuilder()
-                        .setAuthor(stream.getSnippet().getChannelTitle())
-                        .setTitle(stream.getSnippet().getTitle())
-                        .setDescription("Stream has just gone live!")
-                        .setColor(Color.YELLOW)
-                        .setThumbnail(channelAvatar.get(stream.getSnippet().getChannelId()))
-                        .setImage(stream.getSnippet().getThumbnails().getMaxres().getUrl()))
+                    .setEmbed(constructEmbed(stream, channelAvatar))
                     .send(channel);
             } else {
                 new MessageBuilder()
@@ -265,11 +253,22 @@ public class EventExecutor implements CommandExecutor {
         message.addReaction("👍");
     }
 
-    private static void notifyFailed(Message message) {
+    private void notifyFailed(Message message) {
         message.addReaction("👎");
     }
 
-    public static void notifyUnallowed(Message message) {
+    private void notifyUnallowed(Message message) {
         message.addReaction("❌");
+    }
+
+    private EmbedBuilder constructEmbed(Video video, Map<String, String> channelIdToAvatarMap) {
+        return new EmbedBuilder()
+            .setAuthor(video.getSnippet().getChannelTitle())
+            .setTitle(video.getSnippet().getTitle())
+            .setDescription("Stream has just gone live!")
+            .setColor(Color.YELLOW)
+            .setThumbnail(channelIdToAvatarMap.get(video.getSnippet().getChannelId()))
+            .setImage(video.getSnippet().getThumbnails().getMaxres().getUrl())
+            .setUrl(String.format("https://www.youtube.com/watch?v=%s", video.getId()));
     }
 }
