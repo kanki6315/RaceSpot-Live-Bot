@@ -74,10 +74,13 @@ public class EventExecutor implements CommandExecutor {
 
     @Scheduled(fixedRate = 300000)
     public void checkScheduledEvents() {
+        logger.info("beginning scheduled check");
         List<Event> events = eventRepository.findByStatus(EventStatus.SCHEDULED);
         if(events.size() == 0) {
+            logger.info("No events scheduled!");
             return;
         }
+        logger.info(String.format("%d events to check", events.size()));
 
         try {
             YouTube.Videos.List search = youtubeClient.videos().list(Arrays.asList("id", "snippet"));
@@ -85,6 +88,7 @@ public class EventExecutor implements CommandExecutor {
             search.setId(events.stream().map(Event::getYoutubeLink).collect(Collectors.toList()));
             //search.setFields("items(id/kind,id/videoId,snippet/title,snippet/thumbnails/default/url,snippet/liveBroadcastContent)");
 
+            int counter = 0;
             VideoListResponse searchResponse = search.execute();
             List<Video> searchResultList = searchResponse.getItems();
             if (searchResultList != null) {
@@ -101,16 +105,21 @@ public class EventExecutor implements CommandExecutor {
                         new MessageBuilder()
                             .append(String.format("Event is live: %S", event.getYoutubeLink()))
                             .send(channel);
+                        counter++;
+                        logger.info(String.format("Event is live: %S", event.getYoutubeLink()));
                     }
                 }
             }
+            logger.info(String.format("finished checking events: %d events live", counter));
         } catch (Exception ex) {
+            logger.error(ex.getMessage());
             ServerTextChannel
                 channel = api.getServerTextChannelById(errorChannelId).get();
             new MessageBuilder()
                 .append(String.format("Error while syncing event status: %s", ex.getMessage()))
                 .send(channel);
         }
+        logger.info("finished scheduled task");
     }
 
     @Command(aliases = "!addYTevent", description = "Add Event to DB", usage = "!event [YouTube URL]")
