@@ -58,6 +58,7 @@ public class EventExecutor implements CommandExecutor {
         final EventRepository eventRepository,
         final String annoucementChannelId,
         final String errorChannelId) {
+        this.api = api;
         this.googleApiKey = googleApiKey;
         this.eventRepository = eventRepository;
         this.annoucementChannelId = annoucementChannelId;
@@ -71,7 +72,7 @@ public class EventExecutor implements CommandExecutor {
         this.logger = LoggerFactory.getLogger(EventExecutor.class);
     }
 
-    @Scheduled(fixedRate = 1500000)
+    @Scheduled(fixedRate = 300000)
     public void checkScheduledEvents() {
         List<Event> events = eventRepository.findByStatus(EventStatus.SCHEDULED);
         if(events.size() == 0) {
