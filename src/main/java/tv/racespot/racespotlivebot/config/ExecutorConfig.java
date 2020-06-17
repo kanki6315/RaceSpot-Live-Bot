@@ -2,10 +2,10 @@
  * Copyright (C) 2020 by Amobee Inc.
  * All Rights Reserved.
  */
-package tv.racespot.discordlivebot.config;
+package tv.racespot.racespotlivebot.config;
 
-import tv.racespot.discordlivebot.data.EventRepository;
-import tv.racespot.discordlivebot.service.executor.EventExecutor;
+import tv.racespot.racespotlivebot.data.EventRepository;
+import tv.racespot.racespotlivebot.service.executor.EventExecutor;
 
 import org.javacord.api.DiscordApi;
 import org.springframework.beans.factory.annotation.Autowired;

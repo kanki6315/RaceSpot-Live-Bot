@@ -2,15 +2,15 @@
  * Copyright (C) 2020 by Amobee Inc.
  * All Rights Reserved.
  */
-package tv.racespot.discordlivebot.config;
+package tv.racespot.racespotlivebot.config;
 
 import java.sql.SQLException;
 import java.util.TimeZone;
 
 import javax.annotation.PostConstruct;
 
-import tv.racespot.discordlivebot.service.BotService;
-import tv.racespot.discordlivebot.service.executor.EventExecutor;
+import tv.racespot.racespotlivebot.service.BotService;
+import tv.racespot.racespotlivebot.service.executor.EventExecutor;
 
 import org.h2.tools.Server;
 import org.javacord.api.DiscordApi;

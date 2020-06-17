@@ -1,6 +1,6 @@
-package tv.racespot.discordlivebot;
+package tv.racespot.racespotlivebot;
 
-import tv.racespot.discordlivebot.service.BotService;
+import tv.racespot.racespotlivebot.service.BotService;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;

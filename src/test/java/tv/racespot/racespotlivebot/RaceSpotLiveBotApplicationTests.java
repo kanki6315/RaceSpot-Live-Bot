@@ -1,4 +1,4 @@
-package tv.racespot.discordlivebot;
+package tv.racespot.racespotlivebot;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

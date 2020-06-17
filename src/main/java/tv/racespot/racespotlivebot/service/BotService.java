@@ -2,11 +2,11 @@
  * Copyright (C) 2020 by Amobee Inc.
  * All Rights Reserved.
  */
-package tv.racespot.discordlivebot.service;
+package tv.racespot.racespotlivebot.service;
 
 import de.btobastian.sdcf4j.CommandHandler;
 import de.btobastian.sdcf4j.handler.JavacordHandler;
-import tv.racespot.discordlivebot.service.executor.EventExecutor;
+import tv.racespot.racespotlivebot.service.executor.EventExecutor;
 
 import org.javacord.api.DiscordApi;
 import org.javacord.api.entity.activity.ActivityType;

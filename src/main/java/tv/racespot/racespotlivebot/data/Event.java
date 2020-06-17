@@ -2,19 +2,24 @@
  * Copyright (C) 2020 by Amobee Inc.
  * All Rights Reserved.
  */
-package tv.racespot.discordlivebot.data;
+package tv.racespot.racespotlivebot.data;
 
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import javax.persistence.Table;
+
+import org.hibernate.annotations.GenericGenerator;
 
 @Entity
 @Table(name = "event")
 public class Event {
 
     @Id
+    @GeneratedValue(generator="system-uuid")
+    @GenericGenerator(name="system-uuid", strategy = "uuid")
     private String id;
 
     private String youtubeLink;

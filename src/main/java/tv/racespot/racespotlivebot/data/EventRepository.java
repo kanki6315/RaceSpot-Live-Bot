@@ -2,7 +2,7 @@
  * Copyright (C) 2020 by Amobee Inc.
  * All Rights Reserved.
  */
-package tv.racespot.discordlivebot.data;
+package tv.racespot.racespotlivebot.data;
 
 import java.util.List;
 

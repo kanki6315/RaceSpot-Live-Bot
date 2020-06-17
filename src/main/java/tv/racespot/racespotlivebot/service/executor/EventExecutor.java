@@ -2,7 +2,7 @@
  * Copyright (C) 2020 by Amobee Inc.
  * All Rights Reserved.
  */
-package tv.racespot.discordlivebot.service.executor;
+package tv.racespot.racespotlivebot.service.executor;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -13,16 +13,15 @@ import java.util.stream.Collectors;
 
 import de.btobastian.sdcf4j.Command;
 import de.btobastian.sdcf4j.CommandExecutor;
-import tv.racespot.discordlivebot.data.Event;
-import tv.racespot.discordlivebot.data.EventRepository;
-import tv.racespot.discordlivebot.data.EventStatus;
+import tv.racespot.racespotlivebot.data.Event;
+import tv.racespot.racespotlivebot.data.EventRepository;
+import tv.racespot.racespotlivebot.data.EventStatus;
 
 import org.javacord.api.DiscordApi;
 import org.javacord.api.entity.channel.ServerTextChannel;
 import org.javacord.api.entity.channel.TextChannel;
 import org.javacord.api.entity.message.Message;
 import org.javacord.api.entity.message.MessageBuilder;
-import org.javacord.api.entity.message.MessageDecoration;
 import org.javacord.api.entity.permission.PermissionType;
 import org.javacord.api.entity.permission.Role;
 import org.javacord.api.entity.server.Server;
@@ -36,8 +35,6 @@ import com.google.api.client.http.HttpRequestInitializer;
 import com.google.api.client.http.javanet.NetHttpTransport;
 import com.google.api.client.json.jackson2.JacksonFactory;
 import com.google.api.services.youtube.YouTube;
-import com.google.api.services.youtube.model.SearchListResponse;
-import com.google.api.services.youtube.model.SearchResult;
 import com.google.api.services.youtube.model.Video;
 import com.google.api.services.youtube.model.VideoListResponse;
 
