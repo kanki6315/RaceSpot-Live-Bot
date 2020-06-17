@@ -46,7 +46,7 @@ public class AppConfig {
     @Bean(initMethod = "start", destroyMethod = "stop")
     public Server inMemoryH2DatabaseaServer() throws SQLException {
         return Server.createTcpServer(
-            "-tcp", "-tcpAllowOthers", "-tcpPort", "9090");
+            "-tcp", "-tcpAllowOthers", "-tcpPort", "9080");
     }
 
     @PostConstruct
