@@ -240,6 +240,22 @@ public class EventExecutor implements CommandExecutor {
         }
     }
 
+    @Command(aliases = "!clear", description = "Clear completed events", usage = "!clear")
+    public void clear(String[] args, Message message, Server server, User user, TextChannel channel)
+        throws IOException {
+
+        if(!adminChannelId.equals(Long.toString(channel.getId()))) {
+            return;
+        }
+        if(!hasAdminPermission(server, user)) {
+            notifyUnallowed(message);
+            return;
+        }
+
+        List<Event> events = eventRepository.findByStatus(EventStatus.LIVE);
+        eventRepository.deleteAll(events);
+    }
+
     private boolean hasAdminPermission(Server server, User user) {
 
         List<Role> roles = user.getRoles(server);
