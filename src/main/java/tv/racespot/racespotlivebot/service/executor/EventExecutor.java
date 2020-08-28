@@ -4,11 +4,15 @@
  */
 package tv.racespot.racespotlivebot.service.executor;
 
+import static tv.racespot.racespotlivebot.util.MessageUtil.hasAdminPermission;
+import static tv.racespot.racespotlivebot.util.MessageUtil.notifyChecked;
+import static tv.racespot.racespotlivebot.util.MessageUtil.notifyFailed;
+import static tv.racespot.racespotlivebot.util.MessageUtil.notifyUnallowed;
+
 import java.awt.*;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -17,6 +21,8 @@ import java.util.stream.Collectors;
 
 import de.btobastian.sdcf4j.Command;
 import de.btobastian.sdcf4j.CommandExecutor;
+import tv.racespot.racespotlivebot.data.DServer;
+import tv.racespot.racespotlivebot.data.DServerRepository;
 import tv.racespot.racespotlivebot.data.Event;
 import tv.racespot.racespotlivebot.data.EventRepository;
 import tv.racespot.racespotlivebot.data.EventStatus;
@@ -28,8 +34,6 @@ import org.javacord.api.entity.channel.TextChannel;
 import org.javacord.api.entity.message.Message;
 import org.javacord.api.entity.message.MessageBuilder;
 import org.javacord.api.entity.message.embed.EmbedBuilder;
-import org.javacord.api.entity.permission.PermissionType;
-import org.javacord.api.entity.permission.Role;
 import org.javacord.api.entity.server.Server;
 import org.javacord.api.entity.user.User;
 import org.slf4j.Logger;
@@ -49,10 +53,10 @@ import com.google.api.services.youtube.model.VideoListResponse;
 public class EventExecutor implements CommandExecutor {
 
     private final String googleApiKey;
-    private final String announcementChannelId;
     private final String adminChannelId;
 
     private final EventRepository eventRepository;
+    private final DServerRepository serverRepository;
 
     private YouTube youtubeClient;
 
@@ -64,12 +68,12 @@ public class EventExecutor implements CommandExecutor {
         final DiscordApi api,
         final String googleApiKey,
         final EventRepository eventRepository,
-        final String announcementChannelId,
+        final DServerRepository serverRepository,
         final String adminChannelId) {
         this.api = api;
         this.googleApiKey = googleApiKey;
         this.eventRepository = eventRepository;
-        this.announcementChannelId = announcementChannelId;
+        this.serverRepository = serverRepository;
         this.adminChannelId = adminChannelId;
 
         this.youtubeClient = new YouTube.Builder(new NetHttpTransport(), new JacksonFactory(), new HttpRequestInitializer() {
@@ -119,17 +123,31 @@ public class EventExecutor implements CommandExecutor {
             if(!eventToVideoMap.isEmpty()) {
                 Map<String, String> channelIdToAvatarMap = getChannelAvatarMap(channelIds);
 
+                List<DServer> servers = serverRepository.findAll();
+
                 for (Event event : eventToVideoMap.keySet()) {
                     event.setStatus(EventStatus.LIVE);
                     eventRepository.save(event);
 
                     Video video = eventToVideoMap.get(event);
 
-                    ServerTextChannel
-                        channel = api.getServerTextChannelById(announcementChannelId).get();
-                    new MessageBuilder()
-                        .setEmbed(constructEmbed(video, channelIdToAvatarMap))
-                        .send(channel);
+                    for (DServer server : servers) {
+                        try {
+                            ServerTextChannel
+                                channel = api.getServerTextChannelById(server.getDChannelId()).get();
+                            new MessageBuilder()
+                                .setEmbed(constructEmbed(video, channelIdToAvatarMap))
+                                .send(channel);
+                        } catch (Exception ex) {
+                            logger.error(ex.getMessage());
+                            ServerTextChannel
+                                channel = api.getServerTextChannelById(adminChannelId).get();
+                            new MessageBuilder()
+                                .append(String.format("Error while sending live announcement for server %s: %s",
+                                    server.getDName(), ex.getMessage()))
+                                .send(channel);
+                        }
+                    }
                     counter++;
                     logger.info(String.format("Event is live: %S", event.getYoutubeLink()));
                 }
@@ -203,7 +221,7 @@ public class EventExecutor implements CommandExecutor {
         if(!adminChannelId.equals(Long.toString(channel.getId()))) {
             return;
         }
-        if(!hasAdminPermission(server, user) && args.length != 1) {
+        if(!hasAdminPermission(server, user) || args.length != 1) {
             notifyUnallowed(message);
             return;
         }
@@ -256,26 +274,7 @@ public class EventExecutor implements CommandExecutor {
         eventRepository.deleteAll(events);
     }
 
-    private boolean hasAdminPermission(Server server, User user) {
 
-        List<Role> roles = user.getRoles(server);
-        return roles.stream()
-            .map(Role::getAllowedPermissions)
-            .flatMap(Collection::stream)
-            .anyMatch(role -> role.equals(PermissionType.ADMINISTRATOR));
-    }
-
-    private void notifyChecked(Message message) {
-        message.addReaction("👍");
-    }
-
-    private void notifyFailed(Message message) {
-        message.addReaction("👎");
-    }
-
-    private void notifyUnallowed(Message message) {
-        message.addReaction("❌");
-    }
 
     private EmbedBuilder constructEmbed(Video video, Map<String, String> channelIdToAvatarMap) {
         return new EmbedBuilder()

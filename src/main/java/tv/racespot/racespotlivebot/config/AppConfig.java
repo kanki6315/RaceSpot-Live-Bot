@@ -10,6 +10,7 @@ import javax.annotation.PostConstruct;
 
 import tv.racespot.racespotlivebot.service.BotService;
 import tv.racespot.racespotlivebot.service.executor.EventExecutor;
+import tv.racespot.racespotlivebot.service.executor.ServerExecutor;
 
 import org.javacord.api.DiscordApi;
 import org.javacord.api.DiscordApiBuilder;
@@ -34,11 +35,13 @@ public class AppConfig {
     @Bean
     public BotService botService(
         DiscordApi api,
-        EventExecutor eventExecutor) {
+        EventExecutor eventExecutor,
+        ServerExecutor serverExecutor) {
 
         return new BotService(
             api,
-            eventExecutor);
+            eventExecutor,
+            serverExecutor);
     }
 
     @PostConstruct
