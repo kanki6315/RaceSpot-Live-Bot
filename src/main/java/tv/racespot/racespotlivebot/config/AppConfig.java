@@ -29,7 +29,10 @@ public class AppConfig {
     @Bean
     public DiscordApi api(){
 
-        return new DiscordApiBuilder().setToken(apiToken).login().join();
+        return new DiscordApiBuilder()
+            .setToken(apiToken)
+            .setAllIntents()
+            .login().join();
     }
 
     @Bean

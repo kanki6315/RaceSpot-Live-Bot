@@ -5,7 +5,7 @@ plugins {
 }
 
 group = 'tv.racespot'
-version = '0.0.2'
+version = '0.0.3'
 sourceCompatibility = '1.8'
 
 repositories {
@@ -19,7 +19,7 @@ dependencies {
 		exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
 	}
 
-	implementation 'org.javacord:javacord:3.0.5'
+	implementation 'org.javacord:javacord:3.1.1'
 
 	implementation 'de.btobastian.sdcf4j:sdcf4j-core:v1.0.10'
 	implementation 'de.btobastian.sdcf4j:sdcf4j-javacord:v1.0.10'
