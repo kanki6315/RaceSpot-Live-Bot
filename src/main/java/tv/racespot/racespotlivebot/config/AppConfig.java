@@ -16,7 +16,6 @@ import tv.racespot.racespotlivebot.service.executor.ServerExecutor;
 import tv.racespot.racespotlivebot.service.executor.UserMappingExecutor;
 import tv.racespot.racespotlivebot.service.rest.SheetsManager;
 
-import org.h2.tools.Server;
 import org.javacord.api.DiscordApi;
 import org.javacord.api.DiscordApiBuilder;
 import org.springframework.beans.factory.annotation.Value;
