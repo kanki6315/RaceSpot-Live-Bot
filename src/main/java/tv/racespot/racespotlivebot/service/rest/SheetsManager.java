@@ -4,10 +4,12 @@
  */
 package tv.racespot.racespotlivebot.service.rest;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.StringReader;
+import java.nio.file.Paths;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -236,15 +238,18 @@ public class SheetsManager {
     private Credential getCredentials(final NetHttpTransport HTTP_TRANSPORT) throws IOException {
 
         final List<String> SCOPES = Collections.singletonList(SheetsScopes.SPREADSHEETS);
+        logger.info(Paths.get("").toString());
 
         // Load client secrets.
         InputStream in = SheetsManager.class.getResourceAsStream("/credentials.json");
         GoogleClientSecrets clientSecrets = GoogleClientSecrets.load(JSON_FACTORY, new InputStreamReader(in));
 
+        File file = new File("tokens");
+        logger.info(file.getCanonicalPath());
         // Build flow and trigger user authorization request.
         GoogleAuthorizationCodeFlow flow = new GoogleAuthorizationCodeFlow.Builder(
             HTTP_TRANSPORT, JSON_FACTORY, clientSecrets, SCOPES)
-            .setDataStoreFactory(new FileDataStoreFactory(new java.io.File("tokens")))
+            .setDataStoreFactory(new FileDataStoreFactory(file))
             .setAccessType("offline")
             .build();
         LocalServerReceiver receiver = new LocalServerReceiver.Builder().setPort(8888).build();

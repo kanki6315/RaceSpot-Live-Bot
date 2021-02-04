@@ -5,7 +5,7 @@ plugins {
 }
 
 group = 'tv.racespot'
-version = '0.1.1'
+version = '0.1.2'
 sourceCompatibility = '1.8'
 
 repositories {
@@ -31,7 +31,7 @@ dependencies {
 	implementation 'com.google.apis:google-api-services-sheets:v4-rev581-1.25.0'
 
 
-	//compile group: 'com.h2database', name: 'h2', version: '1.4.197'
+	compile group: 'com.h2database', name: 'h2', version: '1.4.197'
 	compile group: 'org.springframework.boot', name: 'spring-boot-starter-data-jpa', version: '2.2.0.RELEASE'
 	compile 'org.postgresql:postgresql'
 	compile 'com.google.apis:google-api-services-youtube:v3-rev20200526-1.30.9'
