@@ -7,7 +7,10 @@ package tv.racespot.racespotlivebot.util;
 import java.util.Collection;
 import java.util.List;
 
+import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.javacord.api.entity.channel.TextChannel;
 import org.javacord.api.entity.message.Message;
+import org.javacord.api.entity.message.MessageBuilder;
 import org.javacord.api.entity.permission.PermissionType;
 import org.javacord.api.entity.permission.Role;
 import org.javacord.api.entity.server.Server;
@@ -34,5 +37,18 @@ public class MessageUtil {
 
     public static void notifyUnallowed(Message message) {
         message.addReaction("❌");
+    }
+
+    public static void sendStackTraceToChannel(
+        String message,
+        TextChannel channel,
+        Throwable error) {
+
+        String stackTrace = ExceptionUtils.getStackTrace(error);
+        new MessageBuilder()
+            .append(message)
+            .appendCode("java", error.getMessage())
+            .appendCode("java", stackTrace.substring(0, Math.min(stackTrace.length(), 1000)))
+            .send(channel);
     }
 }

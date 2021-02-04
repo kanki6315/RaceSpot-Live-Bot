@@ -8,9 +8,11 @@ import static tv.racespot.racespotlivebot.util.MessageUtil.hasAdminPermission;
 import static tv.racespot.racespotlivebot.util.MessageUtil.notifyChecked;
 import static tv.racespot.racespotlivebot.util.MessageUtil.notifyFailed;
 import static tv.racespot.racespotlivebot.util.MessageUtil.notifyUnallowed;
+import static tv.racespot.racespotlivebot.util.TableFormatter.printServers;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.StringJoiner;
 
 import de.btobastian.sdcf4j.Command;
 import de.btobastian.sdcf4j.CommandExecutor;
@@ -93,6 +95,22 @@ public class ServerExecutor implements CommandExecutor {
         dServer.setDName(optionalServer.get().getName());
 
         serverRepository.save(dServer);
+        notifyChecked(message);
+    }
+
+    @Command(aliases = "!listServers")
+    public void listServers(Message message, Server server, User user, TextChannel channel) {
+
+        if(!adminChannelId.equals(Long.toString(channel.getId()))) {
+            return;
+        }
+        if(!hasAdminPermission(server, user)) {
+            notifyUnallowed(message);
+            return;
+        }
+
+        List<DServer> dServers = serverRepository.findAll();
+        printServers(dServers, channel);
         notifyChecked(message);
     }
 }
