@@ -8,4 +8,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface ScheduledEventRepository extends JpaRepository<ScheduledEvent, String>  {
     ScheduledEvent findBydMessageId(long dMessageId);
+    ScheduledEvent findByIndex(int index);
 }

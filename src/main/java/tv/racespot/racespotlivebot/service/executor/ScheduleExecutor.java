@@ -10,6 +10,7 @@ import static tv.racespot.racespotlivebot.util.MessageUtil.notifyFailed;
 import static tv.racespot.racespotlivebot.util.MessageUtil.sendStackTraceToChannel;
 
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -47,6 +48,7 @@ public class ScheduleExecutor implements CommandExecutor {
 
     private final String scheduleChannelId;
     private final String adminChannelId;
+    private final String talentChannelId;
     private final String errorChannelId;
 
     private final Logger logger;
@@ -67,6 +69,7 @@ public class ScheduleExecutor implements CommandExecutor {
         final SeriesLogoRepository seriesLogoRepository,
         final String scheduleChannelId,
         final String adminChannelId,
+        final String talentChannelId,
         final String errorChannelId) {
         this.api = api;
         this.sheetsManager = sheetsManager;
@@ -75,6 +78,7 @@ public class ScheduleExecutor implements CommandExecutor {
         this.seriesLogoRepository = seriesLogoRepository;
         this.scheduleChannelId = scheduleChannelId;
         this.adminChannelId = adminChannelId;
+        this.talentChannelId = talentChannelId;
         this.errorChannelId = errorChannelId;
 
         this.logger = LoggerFactory.getLogger(EventExecutor.class);
@@ -95,6 +99,7 @@ public class ScheduleExecutor implements CommandExecutor {
                 api.removeListener(listener);
             }
             api.getTextChannelById(scheduleChannelId).get().deleteMessages(messageIds).join();
+            scheduleRepository.deleteAll(events);
             notifyChecked(message);
         } catch (Exception ex) {
             logger.error(ex.getMessage());
@@ -110,6 +115,140 @@ public class ScheduleExecutor implements CommandExecutor {
                 ex);
             notifyFailed(message);
         }
+    }
+
+    @Command(aliases = "!updateSchedule")
+    public void updateSchedule(Message message, Server server, User user, TextChannel inputChannel) {
+        if (!hasAdminPermission(server, user) || !inputChannel.getIdAsString()
+            .equalsIgnoreCase(adminChannelId)) {
+            return;
+        }
+
+        try {
+            ServerTextChannel scheduleChannel = server.getTextChannelById(scheduleChannelId).get();
+            List<ScheduledEvent> events = sheetsManager.getWeeklyEvents();
+            for (ScheduledEvent singleEvent : events) {
+                logger.info(String.format("Checking %s", singleEvent.getSeriesName()));
+                ScheduledEvent existingEvent = scheduleRepository.findByIndex(singleEvent.getIndex());
+
+                if (hasTalentChanged(existingEvent, singleEvent)) {
+                    logger.info(String.format("%s has had talent updates", existingEvent.getSeriesName()));
+                    List<UserMapping> users = getUserMappingsForEvent(singleEvent);
+                    updateTalent(existingEvent, singleEvent, users, server);
+
+                    logger.info(String.format("Editing message with id %d", existingEvent.getdMessageId()));
+                    Message scheduleMessage = scheduleChannel.getMessageById(existingEvent.getdMessageId()).join();
+                    String tagMessage = getMentionStringFromMappings(server, users);
+                    scheduleMessage.edit(tagMessage, constructScheduleEmbed(existingEvent));
+
+                    scheduleRepository.save(existingEvent);
+                }
+
+            }
+            notifyChecked(message);
+        } catch (Exception ex) {
+            logger.error(ex.getMessage());
+            ex.printStackTrace();
+            ServerTextChannel
+                channel = api.getServerTextChannelById(errorChannelId).get();
+            new MessageBuilder()
+                .append(String.format("Error while updating schedule: %s", ex.getMessage()))
+                .send(inputChannel);
+            sendStackTraceToChannel(
+                "Error when updating schedule",
+                channel,
+                ex);
+            notifyFailed(message);
+        }
+    }
+
+    private List<String> getTalentNotificationMessages(
+        final ScheduledEvent existingEvent,
+        final ScheduledEvent singleEvent,
+        final Server server,
+        final List<UserMapping> users) {
+        List<String> messages = new ArrayList<>();
+        if (users.size() == 0) {
+            return messages;
+        }
+        if(!existingEvent.getProducer().equalsIgnoreCase(singleEvent.getProducer())) {
+            Optional<UserMapping> mapping = users.stream().filter((m) -> m.getTalentName()
+                .equalsIgnoreCase(singleEvent.getProducer())).findFirst();
+
+            if(mapping.isPresent()) {
+                Optional<User> userOptional = server.getMemberById(mapping.get().getdUserId());
+                userOptional.ifPresent(user -> messages.add(getUpdateMessageForTalent("Producer", singleEvent, user)));;
+            }
+        }
+        if(!existingEvent.getLeadCommentator().equalsIgnoreCase(singleEvent.getLeadCommentator())) {
+            Optional<UserMapping> mapping = users.stream().filter((m) -> m.getTalentName()
+                .equalsIgnoreCase(singleEvent.getColourOne())).findFirst();
+
+            if(mapping.isPresent()) {
+                Optional<User> userOptional = server.getMemberById(mapping.get().getdUserId());
+                userOptional.ifPresent(user -> messages.add(getUpdateMessageForTalent("Lead Commentator", singleEvent, user)));;
+            }
+        }
+
+        if(!existingEvent.getColourOne().equalsIgnoreCase(singleEvent.getColourOne())) {
+            Optional<UserMapping> mapping = users.stream().filter((m) -> m.getTalentName()
+                .equalsIgnoreCase(singleEvent.getColourOne())).findFirst();
+
+            if(mapping.isPresent()) {
+                Optional<User> userOptional = server.getMemberById(mapping.get().getdUserId());
+                userOptional.ifPresent(user -> messages.add(getUpdateMessageForTalent("Color Commentator", singleEvent, user)));;
+            }
+        }
+
+        if(!existingEvent.getColourOne().equalsIgnoreCase(singleEvent.getColourTwo())) {
+            Optional<UserMapping> mapping = users.stream().filter((m) -> m.getTalentName()
+                .equalsIgnoreCase(singleEvent.getColourTwo())).findFirst();
+
+            if(mapping.isPresent()) {
+                Optional<User> userOptional = server.getMemberById(mapping.get().getdUserId());
+                userOptional.ifPresent(user -> messages.add(getUpdateMessageForTalent("Color Commentator", singleEvent, user)));;
+            }
+        }
+
+        return messages;
+    }
+
+    private String getUpdateMessageForTalent(
+        final String talentRole,
+        final ScheduledEvent singleEvent,
+        User user) {
+        return String.format("%s : You have been assigned to %s as a %s", user.getMentionTag(), singleEvent.getSeriesName(), talentRole);
+    }
+
+    private void updateTalent(
+        final ScheduledEvent existingEvent,
+        final ScheduledEvent singleEvent,
+        final List<UserMapping> users,
+        final Server server) {
+
+        List<String> updateMessages = getTalentNotificationMessages(existingEvent, singleEvent, server, users);
+
+        existingEvent.setProducer(singleEvent.getProducer());
+        existingEvent.setLeadCommentator(singleEvent.getLeadCommentator());
+        existingEvent.setColourOne(singleEvent.getColourOne());
+        existingEvent.setColourTwo(singleEvent.getColourTwo());
+
+        if (updateMessages.size() > 0) {
+            ServerTextChannel talentChannel = server.getTextChannelById(talentChannelId).get();
+            for(String message : updateMessages) {
+                new MessageBuilder()
+                    .append(message)
+                    .send(talentChannel);
+            }
+        }
+
+    }
+
+    private boolean hasTalentChanged(final ScheduledEvent existingEvent, final ScheduledEvent singleEvent) {
+        return !existingEvent.getProducer().equalsIgnoreCase(singleEvent.getProducer())
+            || !existingEvent.getLeadCommentator().equalsIgnoreCase(singleEvent.getLeadCommentator())
+            || StringUtils.isNotEmpty(singleEvent.getColourOne()) && !singleEvent.getColourOne().equalsIgnoreCase(existingEvent.getColourTwo())
+            || StringUtils.isNotEmpty(singleEvent.getColourTwo()) && !singleEvent.getColourTwo().equalsIgnoreCase(existingEvent.getColourTwo());
     }
 
     @Command(aliases = "!postSchedule")
@@ -179,7 +318,6 @@ public class ScheduleExecutor implements CommandExecutor {
                 ex);
             notifyFailed(message);
         }
-
     }
 
     private boolean isUserOnEvent(ScheduledEvent event, UserMapping mapping) {

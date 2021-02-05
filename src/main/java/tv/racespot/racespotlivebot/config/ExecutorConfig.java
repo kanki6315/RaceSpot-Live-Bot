@@ -32,6 +32,9 @@ public class ExecutorConfig {
     @Value("${discord.notification.schedule_channel_id}")
     private String scheduleChannelId;
 
+    @Value("${discord.notification.talent_channel_id}")
+    private String talentChannelId;
+
     @Value("${discord.notification.error_channel_id}")
     private String errorChannelId;
 
@@ -78,6 +81,7 @@ public class ExecutorConfig {
             seriesLogoRepository,
             scheduleChannelId,
             adminChannelId,
+            talentChannelId,
             errorChannelId);
     }
 
