@@ -57,8 +57,8 @@ public class UserMappingExecutor implements CommandExecutor {
             return;
         }
 
-        List<UserMapping> mappings = userRepository.findByTalentNameIgnoreCase(args[0]);
-        if (mappings.size() > 0) {
+        UserMapping existingUser = userRepository.findByTalentNameIgnoreCase(args[0]);
+        if (existingUser != null) {
             notifyUnallowed(message);
             new MessageBuilder()
                 .append(String.format("Talent already exists with name %s", args[0]))
@@ -97,5 +97,32 @@ public class UserMappingExecutor implements CommandExecutor {
         }
         List<UserMapping> mappings = userRepository.findAll();
         printTalent(mappings, channel);
+    }
+
+    @Command(aliases = "!removeTalent")
+    public void removeTalent(String[] args, Server server, User user, TextChannel channel, Message message) {
+        if (!hasAdminPermission(server, user) || !channel.getIdAsString().equalsIgnoreCase(adminChannelId)) {
+            return;
+        }
+
+        if(args.length != 1) {
+            notifyUnallowed(message);
+            new MessageBuilder()
+                .append("Unable to find user without correct input")
+                .send(channel);
+            return;
+        }
+
+        UserMapping mapping = userRepository.findByTalentNameIgnoreCase(args[0]);
+        if(mapping == null) {
+            notifyUnallowed(message);
+            new MessageBuilder()
+                .append(String.format("Talent does not exist with name %s", args[0]))
+                .send(channel);
+            return;
+        }
+
+        userRepository.delete(mapping);
+        notifyChecked(message);
     }
 }

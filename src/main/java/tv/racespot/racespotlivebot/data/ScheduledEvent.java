@@ -48,6 +48,10 @@ public class ScheduledEvent {
 
     private String notes;
 
+    private float red;
+    private float green;
+    private float blue;
+
     public ScheduledEvent() {
     }
 
@@ -169,5 +173,29 @@ public class ScheduledEvent {
 
     public void setNotes(final String notes) {
         this.notes = notes;
+    }
+
+    public float getRed() {
+        return red;
+    }
+
+    public void setRed(final float red) {
+        this.red = red;
+    }
+
+    public float getGreen() {
+        return green;
+    }
+
+    public void setGreen(final float green) {
+        this.green = green;
+    }
+
+    public float getBlue() {
+        return blue;
+    }
+
+    public void setBlue(final float blue) {
+        this.blue = blue;
     }
 }

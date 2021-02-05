@@ -12,10 +12,12 @@ import javax.annotation.PostConstruct;
 import tv.racespot.racespotlivebot.service.BotService;
 import tv.racespot.racespotlivebot.service.executor.EventExecutor;
 import tv.racespot.racespotlivebot.service.executor.ScheduleExecutor;
+import tv.racespot.racespotlivebot.service.executor.SeriesLogoExecutor;
 import tv.racespot.racespotlivebot.service.executor.ServerExecutor;
 import tv.racespot.racespotlivebot.service.executor.UserMappingExecutor;
 import tv.racespot.racespotlivebot.service.rest.SheetsManager;
 
+import org.h2.tools.Server;
 import org.javacord.api.DiscordApi;
 import org.javacord.api.DiscordApiBuilder;
 import org.springframework.beans.factory.annotation.Value;
@@ -55,14 +57,16 @@ public class AppConfig {
         EventExecutor eventExecutor,
         ServerExecutor serverExecutor,
         ScheduleExecutor scheduleExecutor,
-        UserMappingExecutor userMappingExecutor) {
+        UserMappingExecutor userMappingExecutor,
+        SeriesLogoExecutor seriesLogoExecutor) {
 
         return new BotService(
             api,
             eventExecutor,
             serverExecutor,
             scheduleExecutor,
-            userMappingExecutor);
+            userMappingExecutor,
+            seriesLogoExecutor);
     }
 
     @Bean

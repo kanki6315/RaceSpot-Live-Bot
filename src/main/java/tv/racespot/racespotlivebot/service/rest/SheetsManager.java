@@ -45,9 +45,12 @@ import com.google.api.services.sheets.v4.model.BatchUpdateSpreadsheetRequest;
 import com.google.api.services.sheets.v4.model.CellData;
 import com.google.api.services.sheets.v4.model.CellFormat;
 import com.google.api.services.sheets.v4.model.Color;
+import com.google.api.services.sheets.v4.model.GridData;
 import com.google.api.services.sheets.v4.model.GridRange;
 import com.google.api.services.sheets.v4.model.RepeatCellRequest;
 import com.google.api.services.sheets.v4.model.Request;
+import com.google.api.services.sheets.v4.model.RowData;
+import com.google.api.services.sheets.v4.model.Spreadsheet;
 import com.google.api.services.sheets.v4.model.ValueRange;
 
 public class SheetsManager {
@@ -145,75 +148,72 @@ public class SheetsManager {
         logger.info("Updating weekly schedule");
         Sheets service = getSheetService();
 
-        ValueRange response = service.spreadsheets().values()
-            .get(spreadsheetId, defaultRange)
-            .execute();
+        Spreadsheet sheet = service.spreadsheets().get(spreadsheetId)
+            .setIncludeGridData(true).setRanges(Collections.singletonList(defaultRange)).execute();
+        GridData gridData = sheet.getSheets().get(0).getData().get(0);
+        List<RowData> rowData = gridData.getRowData();
 
-        List<ScheduledEvent> entries = getEntriesFromSheetResponse(response);
+        /*ValueRange response = service.spreadsheets().values()
+            .get(spreadsheetId, defaultRange)
+            .execute();*/
+
+        List<ScheduledEvent> entries = getEntriesFromSheetResponse(rowData);
 
         long lastUpdated = System.currentTimeMillis();
         logger.info(String.format("Updated schedule at %d", lastUpdated));
         return entries;
     }
 
-    private List<ScheduledEvent> getEntriesFromSheetResponse(final ValueRange response) throws IOException {
-        List<List<Object>> spreadsheetOutput = response.getValues();
-        List<String> headers = spreadsheetOutput.get(0).stream()
-            .map(object -> Objects.toString(object, null))
-            .collect(Collectors.toList());
-
-        String csv = getCsvFromValues(spreadsheetOutput.subList(1, spreadsheetOutput.size()));
-
-        CSVParser csvParser = new CSVParser(
-            new StringReader(csv),
-            CSVFormat.DEFAULT
-                .withHeader(headers.toArray(new String[headers.size()]))
-                .withDelimiter(',')
-                .withIgnoreHeaderCase()
-                .withIgnoreEmptyLines()
-                .withTrim());
+    private List<ScheduledEvent> getEntriesFromSheetResponse(final List<RowData> response) throws IOException {
 
         List<ScheduledEvent> entries = new ArrayList<>();
-        int i = 1; // start at 1 for header row in GSheets
-        for (CSVRecord record : csvParser) {
-            entries.add(getEntryFromRecord(record, i));
-            i++;
+        int index = 1;
+
+        for (RowData data : response.subList(1, response.size())) {
+            List<CellData> cells = data.getValues();
+            ScheduledEvent event = new ScheduledEvent();
+            event.setDate(cells.get(MasterScheduleCSVInputs.DATE_REF).getFormattedValue());
+            event.setTime(cells.get(MasterScheduleCSVInputs.UTC_REF).getFormattedValue());
+            event.setPublic("yes".equalsIgnoreCase(cells.get(MasterScheduleCSVInputs.PUBLIC_REF).getFormattedValue()));
+            event.setSeriesName(cells.get(MasterScheduleCSVInputs.SERIES_REF).getFormattedValue());
+            event.setDescription(cells.get(MasterScheduleCSVInputs.DESCRIPTION_REF).getFormattedValue());
+            event.setProducer(cells.get(MasterScheduleCSVInputs.PROD_REF).getFormattedValue());
+            event.setLeadCommentator(cells.get(MasterScheduleCSVInputs.COMM_1_REF).getFormattedValue());
+            event.setColourOne(cells.get(MasterScheduleCSVInputs.COMM_2_REF).getFormattedValue());
+            event.setColourTwo(cells.get(MasterScheduleCSVInputs.COMM_3_REF).getFormattedValue());
+            event.setStreamLocation(cells.get(MasterScheduleCSVInputs.STREAMED_AT_REF).getFormattedValue());
+            event.setWebcam("yes".equalsIgnoreCase(cells.get(MasterScheduleCSVInputs.ZOOM_REF).getFormattedValue()));
+            event.setNotes(cells.get(MasterScheduleCSVInputs.NOTES_REF).getFormattedValue());
+            event.setIndex(index);
+
+            Color color = cells.get(MasterScheduleCSVInputs.SERIES_REF).getUserEnteredFormat().getBackgroundColor();
+            if(color == null || color.size() == 0) {
+                event.setRed(0f);
+                event.setBlue(0f);
+                event.setGreen(0f);
+            } else {
+                if (color.getBlue() == null) {
+                    event.setBlue(0f);
+                } else {
+                    event.setBlue(color.getBlue());
+                }
+                if (color.getRed() == null) {
+                    event.setRed(0f);
+                } else {
+                    event.setRed(color.getRed());
+                }
+                if (color.getGreen() == null) {
+                    event.setGreen(0f);
+                } else {
+                    event.setGreen(color.getGreen());
+                }
+            }
+
+            entries.add(event);
+            index++;
         }
 
         return entries;
-    }
-
-    private ScheduledEvent getEntryFromRecord(final CSVRecord csvRecord, int index) {
-        Map<String, String> record = csvRecord.toMap();
-        ScheduledEvent event = new ScheduledEvent();
-        event.setDate(record.get(MasterScheduleCSVInputs.DATE));
-        event.setTime(record.get(MasterScheduleCSVInputs.UTC));
-        event.setPublic("yes".equalsIgnoreCase(record.get(MasterScheduleCSVInputs.PUBLIC)));
-        event.setSeriesName(record.get(MasterScheduleCSVInputs.SERIES));
-        event.setDescription(record.get(MasterScheduleCSVInputs.DESCRIPTION));
-        event.setProducer(record.get(MasterScheduleCSVInputs.PROD));
-        event.setLeadCommentator(record.get(MasterScheduleCSVInputs.COMM_1));
-        event.setColourOne(record.get(MasterScheduleCSVInputs.COMM_2));
-        event.setColourTwo(record.get(MasterScheduleCSVInputs.COMM_3));
-        event.setStreamLocation(record.get(MasterScheduleCSVInputs.STREAMED_AT));
-        event.setWebcam("yes".equalsIgnoreCase(record.get(MasterScheduleCSVInputs.ZOOM)));
-        event.setNotes(record.get(MasterScheduleCSVInputs.NOTES));
-        event.setIndex(index);
-        return event;
-    }
-
-    private String getCsvFromValues(List<List<Object>> subList) {
-
-        StringJoiner csvBuilder = new StringJoiner("\n");
-        for (List<Object> row : subList) {
-            StringJoiner rowBuilder = new StringJoiner(",");
-            for (Object item : row) {
-                rowBuilder.add(String.format("\"%s\"", item.toString()));
-            }
-            csvBuilder.add(rowBuilder.toString());
-        }
-
-        return csvBuilder.toString();
     }
 
     private void connectAndCacheToken() {

@@ -133,34 +133,34 @@ public class ScheduleExecutor implements CommandExecutor {
                         singleEvent.setdMessageId(sentMessage.getId());
                         scheduleRepository.save(singleEvent);
                         sentMessage.addReactionAddListener(new ReactionAddListener() {
-                                                               @Override
-                                                               public void onReactionAdd(ReactionAddEvent reaction) {
-                                                                   ScheduledEvent event =
-                                                                       scheduleRepository.findBydMessageId(reaction.getMessageId());
-                                                                   UserMapping mapping = userRepository.findBydUserId(reaction.getUserId());
-                                                                   try {
-                                                                       if (isUserOnEvent(event, mapping) && reaction.getEmoji()
-                                                                           .equalsEmoji("\uD83C\uDDFE")) {
-                                                                           // check user is on schedule list, confirm attendance if present
-                                                                           sheetsManager
-                                                                               .updateAttendance(event, true, mapping.getTalentName());
-                                                                           logger.info("yes");
-                                                                       } else if (isUserOnEvent(event, mapping) && reaction.getEmoji()
-                                                                           .equalsEmoji("\uD83C\uDDF3")) {
-                                                                           // check if user is on schedule list, mark down absent if present
-                                                                           sheetsManager
-                                                                               .updateAttendance(event, false, mapping.getTalentName());
-                                                                           logger.info("no");
-                                                                       } else if (reaction.getEmoji().equalsEmoji("\uD83C\uDD93")) {
-                                                                           // add to free list
-                                                                           logger.info("free");
-                                                                       }
-                                                                   } catch (Exception ex) {
-                                                                       logger.info(ex.getMessage());
-                                                                       ex.printStackTrace();
-                                                                   }
-                                                               }
-                                                           }
+                               @Override
+                               public void onReactionAdd(ReactionAddEvent reaction) {
+                                   ScheduledEvent event =
+                                       scheduleRepository.findBydMessageId(reaction.getMessageId());
+                                   UserMapping mapping = userRepository.findBydUserId(reaction.getUserId());
+                                   try {
+                                       if (isUserOnEvent(event, mapping) && reaction.getEmoji()
+                                           .equalsEmoji("\uD83C\uDDFE")) {
+                                           // check user is on schedule list, confirm attendance if present
+                                           sheetsManager
+                                               .updateAttendance(event, true, mapping.getTalentName());
+                                           logger.info("yes");
+                                       } else if (isUserOnEvent(event, mapping) && reaction.getEmoji()
+                                           .equalsEmoji("\uD83C\uDDF3")) {
+                                           // check if user is on schedule list, mark down absent if present
+                                           sheetsManager
+                                               .updateAttendance(event, false, mapping.getTalentName());
+                                           logger.info("no");
+                                       } else if (reaction.getEmoji().equalsEmoji("\uD83C\uDD93")) {
+                                           // add to free list
+                                           logger.info("free");
+                                       }
+                                   } catch (Exception ex) {
+                                       logger.info(ex.getMessage());
+                                       ex.printStackTrace();
+                                   }
+                               }
+                           }
                         ).removeAfter(5, TimeUnit.DAYS);
                     });
             }
@@ -218,7 +218,7 @@ public class ScheduleExecutor implements CommandExecutor {
         EmbedBuilder builder = new EmbedBuilder()
             .setTitle(scheduledEvent.getSeriesName())
             .setDescription(String.format("%s | %s", scheduledEvent.getDate(), scheduledEvent.getTime()))
-            .setColor(Color.YELLOW)
+            .setColor(new Color(scheduledEvent.getRed(), scheduledEvent.getGreen(), scheduledEvent.getBlue()))
             .addField("Details", scheduledEvent.getDescription())
             .addInlineField("Producer", scheduledEvent.getProducer())
             .addInlineField("Commentators", getCommentatorString(scheduledEvent))

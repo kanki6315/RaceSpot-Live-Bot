@@ -12,6 +12,7 @@ import io.bretty.console.table.Alignment;
 import io.bretty.console.table.ColumnFormatter;
 import io.bretty.console.table.Table;
 import tv.racespot.racespotlivebot.data.DServer;
+import tv.racespot.racespotlivebot.data.SeriesLogo;
 import tv.racespot.racespotlivebot.data.UserMapping;
 
 import org.javacord.api.entity.channel.TextChannel;
@@ -86,6 +87,42 @@ public class TableFormatter {
 
         new MessageBuilder()
             .append("Talent\n", MessageDecoration.BOLD)
+            .append("```")
+            .append(table.toString())
+            .append("```")
+            .send(channel);
+    }
+
+    public static void printSeries(List<SeriesLogo> talentMappings, TextChannel channel) {
+
+        if (talentMappings.size() == 0) {
+            new MessageBuilder()
+                .append("Series\n", MessageDecoration.BOLD)
+                .append("```")
+                .append("No registered series found")
+                .append("```")
+                .send(channel);
+            return;
+        }
+
+        List<String> seriesName = new ArrayList<>();
+        List<String> urls = new ArrayList<>();
+
+        for (SeriesLogo mapping : talentMappings) {
+            seriesName.add(mapping.getSeriesName());
+            urls.add(mapping.getThumbnailUrl());
+        }
+
+        Table.Builder builder = new Table.Builder(
+            "Series",
+            seriesName.toArray(new String[0]),
+            getStringFormatterWithWidth(seriesName));
+        addStringColumnToTable(builder, "URL", urls);
+
+        Table table = builder.build();
+
+        new MessageBuilder()
+            .append("Series\n", MessageDecoration.BOLD)
             .append("```")
             .append(table.toString())
             .append("```")

@@ -11,6 +11,7 @@ import tv.racespot.racespotlivebot.data.SeriesLogoRepository;
 import tv.racespot.racespotlivebot.data.UserMappingRepository;
 import tv.racespot.racespotlivebot.service.executor.EventExecutor;
 import tv.racespot.racespotlivebot.service.executor.ScheduleExecutor;
+import tv.racespot.racespotlivebot.service.executor.SeriesLogoExecutor;
 import tv.racespot.racespotlivebot.service.executor.ServerExecutor;
 import tv.racespot.racespotlivebot.service.executor.UserMappingExecutor;
 import tv.racespot.racespotlivebot.service.rest.SheetsManager;
@@ -85,6 +86,14 @@ public class ExecutorConfig {
         UserMappingRepository userMappingRepository) {
         return new UserMappingExecutor(
             userMappingRepository,
+            adminChannelId);
+    }
+
+    @Bean
+    public SeriesLogoExecutor seriesLogoExecutor(
+        SeriesLogoRepository seriesLogoRepository) {
+        return new SeriesLogoExecutor(
+            seriesLogoRepository,
             adminChannelId);
     }
 }

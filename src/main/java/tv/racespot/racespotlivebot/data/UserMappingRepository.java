@@ -13,7 +13,7 @@ public interface UserMappingRepository extends JpaRepository<UserMapping, String
 
     UserMapping findBydUserId(Long DUserId);
 
-    List<UserMapping> findByTalentNameIgnoreCase(String talentName);
+    UserMapping findByTalentNameIgnoreCase(String talentName);
 
     List<UserMapping> findByTalentNameIn(HashSet<String> talentNames);
 }

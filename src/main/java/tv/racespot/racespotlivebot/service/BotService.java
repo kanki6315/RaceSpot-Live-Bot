@@ -8,6 +8,7 @@ import de.btobastian.sdcf4j.CommandHandler;
 import de.btobastian.sdcf4j.handler.JavacordHandler;
 import tv.racespot.racespotlivebot.service.executor.EventExecutor;
 import tv.racespot.racespotlivebot.service.executor.ScheduleExecutor;
+import tv.racespot.racespotlivebot.service.executor.SeriesLogoExecutor;
 import tv.racespot.racespotlivebot.service.executor.ServerExecutor;
 import tv.racespot.racespotlivebot.service.executor.UserMappingExecutor;
 
@@ -23,18 +24,21 @@ public class BotService {
     private final ServerExecutor serverExecutor;
     private final ScheduleExecutor scheduleExecutor;
     private final UserMappingExecutor userMappingExecutor;
+    private final SeriesLogoExecutor seriesLogoExecutor;
 
     public BotService(
         final DiscordApi api,
         final EventExecutor eventExecutor,
         final ServerExecutor serverExecutor,
         final ScheduleExecutor scheduleExecutor,
-        final UserMappingExecutor userMappingExecutor) {
+        final UserMappingExecutor userMappingExecutor,
+        final SeriesLogoExecutor seriesLogoExecutor) {
         this.api = api;
         this.eventExecutor = eventExecutor;
         this.serverExecutor = serverExecutor;
         this.scheduleExecutor = scheduleExecutor;
         this.userMappingExecutor = userMappingExecutor;
+        this.seriesLogoExecutor = seriesLogoExecutor;
     }
 
     public Boolean startBot() {
@@ -46,6 +50,7 @@ public class BotService {
         handler.registerCommand(serverExecutor);
         handler.registerCommand(scheduleExecutor);
         handler.registerCommand(userMappingExecutor);
+        handler.registerCommand(seriesLogoExecutor);
 
         api.addReconnectListener(event -> event.getApi().updateActivity(ActivityType.WATCHING, "Getting ready for live coverage!"));
 
