@@ -182,7 +182,7 @@ public class ScheduleExecutor implements CommandExecutor {
         }
         if(!existingEvent.getLeadCommentator().equalsIgnoreCase(singleEvent.getLeadCommentator())) {
             Optional<UserMapping> mapping = users.stream().filter((m) -> m.getTalentName()
-                .equalsIgnoreCase(singleEvent.getColourOne())).findFirst();
+                .equalsIgnoreCase(singleEvent.getLeadCommentator())).findFirst();
 
             if(mapping.isPresent()) {
                 Optional<User> userOptional = server.getMemberById(mapping.get().getdUserId());
@@ -190,7 +190,7 @@ public class ScheduleExecutor implements CommandExecutor {
             }
         }
 
-        if(!existingEvent.getColourOne().equalsIgnoreCase(singleEvent.getColourOne())) {
+        if(StringUtils.isNotEmpty(singleEvent.getColourOne()) && !singleEvent.getColourOne().equalsIgnoreCase(existingEvent.getColourOne())) {
             Optional<UserMapping> mapping = users.stream().filter((m) -> m.getTalentName()
                 .equalsIgnoreCase(singleEvent.getColourOne())).findFirst();
 
@@ -200,7 +200,7 @@ public class ScheduleExecutor implements CommandExecutor {
             }
         }
 
-        if(!existingEvent.getColourOne().equalsIgnoreCase(singleEvent.getColourTwo())) {
+        if(StringUtils.isNotEmpty(singleEvent.getColourTwo()) && !singleEvent.getColourTwo().equalsIgnoreCase(existingEvent.getColourTwo())) {
             Optional<UserMapping> mapping = users.stream().filter((m) -> m.getTalentName()
                 .equalsIgnoreCase(singleEvent.getColourTwo())).findFirst();
 
