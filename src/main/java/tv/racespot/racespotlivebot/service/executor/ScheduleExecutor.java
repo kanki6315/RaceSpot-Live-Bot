@@ -143,7 +143,6 @@ public class ScheduleExecutor implements CommandExecutor {
 
                     scheduleRepository.save(existingEvent);
                 }
-
             }
             notifyChecked(message);
         } catch (Exception ex) {
@@ -245,8 +244,8 @@ public class ScheduleExecutor implements CommandExecutor {
     }
 
     private boolean hasTalentChanged(final ScheduledEvent existingEvent, final ScheduledEvent singleEvent) {
-        return !existingEvent.getProducer().equalsIgnoreCase(singleEvent.getProducer())
-            || !existingEvent.getLeadCommentator().equalsIgnoreCase(singleEvent.getLeadCommentator())
+        return StringUtils.isNotEmpty(singleEvent.getProducer()) && !singleEvent.getProducer().equalsIgnoreCase(existingEvent.getProducer())
+            || StringUtils.isNotEmpty(singleEvent.getLeadCommentator()) && !singleEvent.getProducer().equalsIgnoreCase(existingEvent.getLeadCommentator())
             || StringUtils.isNotEmpty(singleEvent.getColourOne()) && !singleEvent.getColourOne().equalsIgnoreCase(existingEvent.getColourTwo())
             || StringUtils.isNotEmpty(singleEvent.getColourTwo()) && !singleEvent.getColourTwo().equalsIgnoreCase(existingEvent.getColourTwo());
     }
@@ -321,10 +320,10 @@ public class ScheduleExecutor implements CommandExecutor {
     }
 
     private boolean isUserOnEvent(ScheduledEvent event, UserMapping mapping) {
-        return event.getProducer().equalsIgnoreCase(mapping.getTalentName())
-            || event.getLeadCommentator().equalsIgnoreCase(mapping.getTalentName())
-            || event.getColourOne().equalsIgnoreCase(mapping.getTalentName())
-            || event.getColourTwo().equalsIgnoreCase(mapping.getTalentName());
+        return mapping.getTalentName().equalsIgnoreCase(event.getProducer())
+            || mapping.getTalentName().equalsIgnoreCase(event.getLeadCommentator())
+            || mapping.getTalentName().equalsIgnoreCase(event.getColourOne())
+            || mapping.getTalentName().equalsIgnoreCase(event.getColourTwo());
     }
 
     private String getMentionStringFromMappings(final Server server, final List<UserMapping> users) {
@@ -354,10 +353,10 @@ public class ScheduleExecutor implements CommandExecutor {
 
     private EmbedBuilder constructScheduleEmbed(ScheduledEvent scheduledEvent) {
         EmbedBuilder builder = new EmbedBuilder()
-            .setTitle(scheduledEvent.getSeriesName())
-            .setDescription(String.format("%s | %s", scheduledEvent.getDate(), scheduledEvent.getTime()))
+            .setTitle(String.format("%s \n%s | %s", scheduledEvent.getSeriesName(), scheduledEvent.getDate(), scheduledEvent.getTime()))
+            //.setDescription(String.format("%s | %s", scheduledEvent.getDate(), scheduledEvent.getTime()))
             .setColor(new Color(scheduledEvent.getRed(), scheduledEvent.getGreen(), scheduledEvent.getBlue()))
-            .addField("Details", scheduledEvent.getDescription())
+            .addInlineField("Details", scheduledEvent.getDescription())
             .addInlineField("Producer", scheduledEvent.getProducer())
             .addInlineField("Commentators", getCommentatorString(scheduledEvent))
             .setThumbnail(getImageUrl(scheduledEvent))
