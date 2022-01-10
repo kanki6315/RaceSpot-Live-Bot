@@ -133,9 +133,11 @@ public class ScheduleExecutor implements CommandExecutor {
 
                 if(existingEvent == null) {
                     ServerTextChannel
-                            channel = api.getServerTextChannelById(errorChannelId).get();
-                    channel.sendMessage(String.format("Saved Event for %s cannot be found. Please clear and reimport" +
-                            " schedule.", singleEvent.getSeriesName()));
+                            errorChannel = api.getServerTextChannelById(errorChannelId).get();
+                    new MessageBuilder()
+                            .append(String.format("Saved Event for %s cannot be found. Please clear and reimport" +
+                                    " schedule.", singleEvent.getSeriesName()))
+                            .send(errorChannel).join();
                     continue;
                 }
 
