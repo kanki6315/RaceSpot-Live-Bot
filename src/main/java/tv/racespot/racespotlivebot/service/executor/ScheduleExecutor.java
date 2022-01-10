@@ -244,10 +244,10 @@ public class ScheduleExecutor implements CommandExecutor {
     }
 
     private boolean hasTalentChanged(final ScheduledEvent existingEvent, final ScheduledEvent singleEvent) {
-        return StringUtils.isNotEmpty(singleEvent.getProducer()) && !singleEvent.getProducer().equalsIgnoreCase(existingEvent.getProducer())
-            || StringUtils.isNotEmpty(singleEvent.getLeadCommentator()) && !singleEvent.getProducer().equalsIgnoreCase(existingEvent.getLeadCommentator())
-            || StringUtils.isNotEmpty(singleEvent.getColourOne()) && !singleEvent.getColourOne().equalsIgnoreCase(existingEvent.getColourTwo())
-            || StringUtils.isNotEmpty(singleEvent.getColourTwo()) && !singleEvent.getColourTwo().equalsIgnoreCase(existingEvent.getColourTwo());
+        return StringUtils.equals(singleEvent.getProducer(), existingEvent.getProducer())
+                || StringUtils.equals(singleEvent.getLeadCommentator(), existingEvent.getLeadCommentator())
+                || StringUtils.equals(singleEvent.getColourOne(), existingEvent.getColourOne())
+                || StringUtils.equals(singleEvent.getColourTwo(), existingEvent.getColourTwo());
     }
 
     @Command(aliases = "!postSchedule")
@@ -356,11 +356,16 @@ public class ScheduleExecutor implements CommandExecutor {
             .setTitle(String.format("%s \n%s | %s", scheduledEvent.getSeriesName(), scheduledEvent.getDate(), scheduledEvent.getTime()))
             //.setDescription(String.format("%s | %s", scheduledEvent.getDate(), scheduledEvent.getTime()))
             .setColor(new Color(scheduledEvent.getRed(), scheduledEvent.getGreen(), scheduledEvent.getBlue()))
-            .addInlineField("Details", scheduledEvent.getDescription())
-            .addInlineField("Producer", scheduledEvent.getProducer())
-            .addInlineField("Commentators", getCommentatorString(scheduledEvent))
             .setThumbnail(getImageUrl(scheduledEvent))
             .setFooter(scheduledEvent.getStreamLocation(), RACESPOT_DISCORD_IMAGE);
+
+        if (StringUtils.isNotEmpty(scheduledEvent.getDescription())) {
+            builder.addInlineField("Details", scheduledEvent.getDescription());
+        }
+
+        builder.addInlineField("Producer", StringUtils.isNotEmpty(scheduledEvent.getProducer()) ? scheduledEvent.getProducer() : "TBD")
+                .addInlineField("Commentators", getCommentatorString(scheduledEvent));
+
 
         if (StringUtils.isNotEmpty(scheduledEvent.getNotes())) {
             builder.addField("Notes", scheduledEvent.getNotes());
@@ -370,7 +375,10 @@ public class ScheduleExecutor implements CommandExecutor {
 
     private String getCommentatorString(final ScheduledEvent scheduledEvent) {
         StringJoiner joiner = new StringJoiner(", ");
-        joiner.add(scheduledEvent.getLeadCommentator());
+        joiner.setEmptyValue("TBD");
+        if (StringUtils.isNotEmpty(scheduledEvent.getLeadCommentator())) {
+            joiner.add(scheduledEvent.getLeadCommentator());
+        }
         if (StringUtils.isNotEmpty(scheduledEvent.getColourOne())) {
             joiner.add(scheduledEvent.getColourOne());
         }
