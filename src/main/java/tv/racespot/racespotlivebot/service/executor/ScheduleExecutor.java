@@ -131,6 +131,13 @@ public class ScheduleExecutor implements CommandExecutor {
                 logger.info(String.format("Checking %s", singleEvent.getSeriesName()));
                 ScheduledEvent existingEvent = scheduleRepository.findByIndex(singleEvent.getIndex());
 
+                if(existingEvent == null) {
+                    ServerTextChannel
+                            channel = api.getServerTextChannelById(errorChannelId).get();
+                    channel.sendMessage(String.format("Saved Event for %s cannot be found. Please clear and reimport" +
+                            "schedule.", singleEvent.getSeriesName()));
+                }
+
                 if (hasTalentChanged(existingEvent, singleEvent)) {
                     logger.info(String.format("%s has had talent updates", existingEvent.getSeriesName()));
                     List<UserMapping> users = getUserMappingsForEvent(singleEvent);
@@ -244,10 +251,10 @@ public class ScheduleExecutor implements CommandExecutor {
     }
 
     private boolean hasTalentChanged(final ScheduledEvent existingEvent, final ScheduledEvent singleEvent) {
-        return StringUtils.equals(singleEvent.getProducer(), existingEvent.getProducer())
-                || StringUtils.equals(singleEvent.getLeadCommentator(), existingEvent.getLeadCommentator())
-                || StringUtils.equals(singleEvent.getColourOne(), existingEvent.getColourOne())
-                || StringUtils.equals(singleEvent.getColourTwo(), existingEvent.getColourTwo());
+        return !StringUtils.equals(singleEvent.getProducer(), existingEvent.getProducer())
+                || !StringUtils.equals(singleEvent.getLeadCommentator(), existingEvent.getLeadCommentator())
+                || !StringUtils.equals(singleEvent.getColourOne(), existingEvent.getColourOne())
+                || !StringUtils.equals(singleEvent.getColourTwo(), existingEvent.getColourTwo());
     }
 
     @Command(aliases = "!postSchedule")

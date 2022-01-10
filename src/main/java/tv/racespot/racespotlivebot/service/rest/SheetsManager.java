@@ -74,7 +74,6 @@ public class SheetsManager {
         this.defaultRange = defaultRange;
 
         this.logger = LoggerFactory.getLogger(SheetsManager.class);
-        ;
 
         connectAndCacheToken();
     }
