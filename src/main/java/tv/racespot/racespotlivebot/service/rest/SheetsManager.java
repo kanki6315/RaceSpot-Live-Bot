@@ -175,7 +175,7 @@ public class SheetsManager {
             event.setTime(cells.get(MasterScheduleCSVInputs.UTC_REF).getFormattedValue());
             event.setPublic("yes".equalsIgnoreCase(cells.get(MasterScheduleCSVInputs.PUBLIC_REF).getFormattedValue()));
             event.setSeriesName(cells.get(MasterScheduleCSVInputs.SERIES_REF).getFormattedValue());
-            event.setDescription(cells.get(MasterScheduleCSVInputs.DESCRIPTION_REF).getFormattedValue());
+            event.setDescription(getFormattedValueOrDefault(cells, MasterScheduleCSVInputs.DESCRIPTION_REF));
             event.setProducer(cells.get(MasterScheduleCSVInputs.PROD_REF).getFormattedValue());
             event.setLeadCommentator(cells.get(MasterScheduleCSVInputs.COMM_1_REF).getFormattedValue());
             event.setColourOne(cells.get(MasterScheduleCSVInputs.COMM_2_REF).getFormattedValue());
@@ -208,11 +208,22 @@ public class SheetsManager {
                 }
             }
 
-            entries.add(event);
+            if(StringUtils.isNotEmpty(event.getSeriesName())) {
+                entries.add(event);
+            }
             index++;
         }
 
         return entries;
+    }
+
+    private String getFormattedValueOrDefault(List<CellData> cells, int csvHeader) {
+        String returnData = cells.get(csvHeader).getFormattedValue();
+
+        if(StringUtils.isEmpty(returnData)) {
+            return "";
+        }
+        return returnData;
     }
 
     private void connectAndCacheToken() {
