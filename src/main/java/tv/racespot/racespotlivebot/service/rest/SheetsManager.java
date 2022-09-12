@@ -170,6 +170,10 @@ public class SheetsManager {
 
         for (RowData data : response.subList(1, response.size())) {
             List<CellData> cells = data.getValues();
+
+            if(cells == null) {
+                continue;
+            }
             ScheduledEvent event = new ScheduledEvent();
             event.setDate(cells.get(MasterScheduleCSVInputs.DATE_REF).getFormattedValue());
             event.setTime(cells.get(MasterScheduleCSVInputs.UTC_REF).getFormattedValue());
