@@ -171,7 +171,7 @@ public class SheetsManager {
         for (RowData data : response.subList(1, response.size())) {
             List<CellData> cells = data.getValues();
 
-            if(cells == null) {
+            if(cells == null || cells.size() < 14) {
                 continue;
             }
             ScheduledEvent event = new ScheduledEvent();

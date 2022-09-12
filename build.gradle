@@ -5,7 +5,7 @@ plugins {
 }
 
 group = 'tv.racespot'
-version = '0.1.12'
+version = '0.1.13'
 sourceCompatibility = '1.8'
 
 repositories {
