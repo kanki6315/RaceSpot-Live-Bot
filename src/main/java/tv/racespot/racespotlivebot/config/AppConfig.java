@@ -4,20 +4,14 @@
  */
 package tv.racespot.racespotlivebot.config;
 
-import java.sql.SQLException;
 import java.util.TimeZone;
 
 import javax.annotation.PostConstruct;
 
 import tv.racespot.racespotlivebot.service.BotService;
-import tv.racespot.racespotlivebot.service.executor.EventExecutor;
-import tv.racespot.racespotlivebot.service.executor.ScheduleExecutor;
-import tv.racespot.racespotlivebot.service.executor.SeriesLogoExecutor;
-import tv.racespot.racespotlivebot.service.executor.ServerExecutor;
-import tv.racespot.racespotlivebot.service.executor.UserMappingExecutor;
+import tv.racespot.racespotlivebot.service.commands.*;
 import tv.racespot.racespotlivebot.service.rest.SheetsManager;
 
-import org.h2.tools.Server;
 import org.javacord.api.DiscordApi;
 import org.javacord.api.DiscordApiBuilder;
 import org.springframework.beans.factory.annotation.Value;
@@ -27,7 +21,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.Scope;
 
 @Configuration
-@Import({ExecutorConfig.class})
+@Import({CommandConfig.class})
 public class AppConfig {
 
     @Value("${discord.api.token}")
@@ -53,20 +47,20 @@ public class AppConfig {
 
     @Bean
     public BotService botService(
-        DiscordApi api,
-        EventExecutor eventExecutor,
-        ServerExecutor serverExecutor,
-        ScheduleExecutor scheduleExecutor,
-        UserMappingExecutor userMappingExecutor,
-        SeriesLogoExecutor seriesLogoExecutor) {
+            DiscordApi api,
+            EventCommands eventCommands,
+            ScheduleCommands scheduleCommands,
+            SeriesLogoCommands seriesLogoCommands,
+            ServerCommands serverCommands,
+            UserMappingCommands userMappingCommands) {
 
         return new BotService(
-            api,
-            eventExecutor,
-            serverExecutor,
-            scheduleExecutor,
-            userMappingExecutor,
-            seriesLogoExecutor);
+                api,
+                eventCommands,
+                scheduleCommands,
+                seriesLogoCommands,
+                serverCommands,
+                userMappingCommands);
     }
 
     @Bean

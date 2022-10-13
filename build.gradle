@@ -1,12 +1,12 @@
 plugins {
-	id 'org.springframework.boot' version '2.3.1.RELEASE'
+	id 'org.springframework.boot' version '2.3.4.RELEASE'
 	id 'io.spring.dependency-management' version '1.0.9.RELEASE'
 	id 'java'
 }
 
 group = 'tv.racespot'
-version = '0.1.13'
-sourceCompatibility = '1.8'
+version = '0.2.0'
+sourceCompatibility = '11'
 
 repositories {
 	mavenCentral()
@@ -18,11 +18,13 @@ dependencies {
 	testImplementation('org.springframework.boot:spring-boot-starter-test') {
 		exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
 	}
-
-	implementation 'org.javacord:javacord:3.1.1'
+	implementation 'org.javacord:javacord:3.4.0'
 
 	implementation 'de.btobastian.sdcf4j:sdcf4j-core:v1.0.10'
 	implementation 'de.btobastian.sdcf4j:sdcf4j-javacord:v1.0.10'
+
+	implementation 'com.github.S3nS3IW00:JCommands:4.2.0'
+
 	implementation 'org.apache.commons:commons-lang3:3.5'
 	implementation "org.apache.commons:commons-csv:1.5"
 
